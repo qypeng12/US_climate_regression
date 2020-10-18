@@ -1,1 +1,1 @@
-# Regression of precipitation on temperature anomalies in Continental U.S.
+# Regression of climate anomalies in continental U.S.
