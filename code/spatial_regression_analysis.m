@@ -94,6 +94,7 @@ end  % year loop
 ninnd=reshape(ninnd,4,66);  %reshape for regression by quarter
 
 tfac=sqrt(64);
+
 % Now, I think we can compute correlation maps
   for i=1:4
 	  cor(:,i)=squeeze(ninnd(i,:))*squeeze(pn(:,i,:))'/66.;
@@ -162,7 +163,7 @@ hold off
 end % end of pnorm loop
 end  % end of months loop
 
-allskip=1
+allskip=1;
 if allskip == 0
 
 %First do warm events
@@ -192,16 +193,16 @@ pneg=reshape(pneg,lonx*latx,12,66);
 
 %  OK, now loop on months   ************************************************
   for i=1:12  % this loop should go to end  (1)
-	  pposa=double(sum(squeeze(ppos(:,i,:)),2));  %add up the chosen months
-	  pposd=squeeze(ppos(:,i,:)).*squeeze(ppos(:,i,:)); %square chosen months
-ninpos=reshape(ninpos,12,66);
-ninpoa=sum(ninpos(i,:),2);    % count the number of months chosen
-nn(1,i)=ninpoa;  %save number chosen into a 2x12 array
-pposd=double(squeeze((sum(pposd,2))/(ninpoa)));  %this computes average of squares
-pposa=pposa./ninpoa;  %divide sum by sample size to get mean
-  pposd=pposd-pposa.*pposa;  %  subtract square of average from sum of squares to get variance
-	     pposd=pposd*ninpoa/(ninpoa-1);  %unbiased estimate of variance
-pposa=reshape(pposa,lonx,latx);
+	pposa=double(sum(squeeze(ppos(:,i,:)),2));  %add up the chosen months
+	pposd=squeeze(ppos(:,i,:)).*squeeze(ppos(:,i,:)); %square chosen months
+    ninpos=reshape(ninpos,12,66);
+    ninpoa=sum(ninpos(i,:),2);    % count the number of months chosen
+    nn(1,i)=ninpoa;  %save number chosen into a 2x12 array
+    pposd=double(squeeze((sum(pposd,2))/(ninpoa)));  %this computes average of squares
+    pposa=pposa./ninpoa;  %divide sum by sample size to get mean
+    pposd=pposd-pposa.*pposa;  %  subtract square of average from sum of squares to get variance
+	pposd=pposd*ninpoa/(ninpoa-1);  %unbiased estimate of variance
+    pposa=reshape(pposa,lonx,latx);
 
 
 % do it all again for the negative composite
@@ -216,12 +217,12 @@ pnega=pnega./ninnea;
 	     pnegd=pnegd-pnega.*pnega; %sum of squares minus square of sums
 	     pnegd=pnegd*ninnea/(ninnea-1);  % unbiased variance
 pnega=reshape(pnega,lonx,latx);
+
 if ninpoa>5   % if either of the samples is less than 6, don't bother (2)
 if ninnea>5   %   (3)
 
-%  Here we compute the t-statistic using (1.35) in the chapter 1 notes
+%  Here we compute the t-statistic 
 pdifa=pposa-pnega;  % raw difference
-%tsig=sqrt((pposd/ninpoa+pnegd/ninnea));
 tsig=sqrt((pposd*ninpoa+pnegd*ninnea));
   factor=sqrt(((1.0/ninpoa+1.0/ninnea)./(ninpoa+ninnea-2)));
 tsig=tsig*factor;
@@ -232,9 +233,9 @@ dof=ninpoa+ninnea-2;  %degrees of freedom
 tcrit= tinv(alphaup,dof);   
 %tinv is a function in Matlab to compute the crtical t-statistic
 
-%   OK the rest is just plotting  this is line 96   ***************************
+%   OK the rest is just plotting  ***************************
 
-if tstatplot == 1  (4)
+if tstatplot == 1  
 % plot t statistic
 maxe=squeeze(max(max(abs(tstat))));
 maxe10=maxe/10.;
@@ -250,11 +251,9 @@ coast = load('coast.mat');
 colormap(cmap);
 [C, H] = contourfm(lat,lon,tstat',conts,'LineWidth',0.01,'LineStyle','none');
 [C, H] = contourm(lat,lon,tstat',contt,'LineWidth',2.0,'LineColor','black');
-%[C, H] = contourm(lat,lon,pmc(:,:,i)','LineWidth',0.5);
 caxis([-maxe maxe]);
 hold on
 plotm(coast.lat,coast.long,'Color',[0.5 0.5 0.5],'LineWidth',0.5);
-%geoshow(coast.lat,coast.long,'DisplayType','polygon','FaceColor','black');
 title(['Precip, t-statistic (1.35) ',num2str(pluscrit),' month=',num2str(i),	  ' nn=',num2str(nn(1,i)),' - ',num2str(nn(2,i)),' dof= ',num2str(dof),' tcrit=',num2str(tcrit)  ...
 ,' tmx=',num2str(maxe)])
 set(gca,'FontSize',12);
@@ -272,7 +271,7 @@ maxe=squeeze(max(max(max(pposa))));
 maxe10=maxe/15.;
 conts=[maxe10:maxe10:maxe];
 
-		   pslat1=25.0; pslat2=50.0;
+pslat1=25.0; pslat2=50.0;
 coast = load('coast.mat');
 
 
@@ -281,107 +280,63 @@ coast = load('coast.mat');
 [cmap]=buildcmap('rwb');
 colormap(cmap);
 [C, H] = contourfm(lat,lon,pposa',conts,'LineWidth',0.5,'LineStyle','none');
-%[C, H] = contourm(lat,lon,pmc(:,:,i)','LineWidth',0.5);
 caxis([0 maxe]);
 hold on
 plotm(coast.lat,coast.long,'Color',[0.5 0.5 0.5],'LineWidth',0.5);
-%geoshow(coast.lat,coast.long,'DisplayType','polygon','FaceColor','black');
 title(['GPCP Precip, El Nino ',num2str(pluscrit),' month=',num2str(i),' nn=',num2str(nn(1,i))])
 set(gca,'FontSize',12);
 colorbar
 set(gca,'Color','none');
-saveas(gca,['PrecipNino_',num2str(pluscrit),num2str(i),'.epsc']);
-export_fig ['PrecipNino_',num2str(pluscrit),num2str(i),'.epsc'] -transparent
 
 % Next plot La Nina  ***********************************************
 maxe=squeeze(max(max(max(pnega))));
 maxe10=maxe/15.;
 conts=[maxe10:maxe10:maxe];
 
-		   pslat1=25.0; pslat2=50.0;
-coast = load('coast.mat');
+pslat1=25.0; pslat2=50.0;
 
-
- figure
-  ax =axesm('MapProjection','robinson','Grid','on','FLineWidth',1.0,'MapLatLimit',[pslat1 pslat2],'MapLonLimit',[235 295]);
+figure
+ ax =axesm('MapProjection','robinson','Grid','on','FLineWidth',1.0,'MapLatLimit',[pslat1 pslat2],'MapLonLimit',[235 295]);
 [cmap]=buildcmap('rwb');
 colormap(cmap);
 [C, H] = contourfm(lat,lon,pnega',conts,'LineWidth',0.5,'LineStyle','none');
-%[C, H] = contourm(lat,lon,pmc(:,:,i)','LineWidth',0.5);
 caxis([0 maxe]);
 hold on
 plotm(coast.lat,coast.long,'Color',[0.5 0.5 0.5],'LineWidth',0.5);
-%geoshow(coast.lat,coast.long,'DisplayType','polygon','FaceColor','black');
 title(['GPCP Precip, Warm ',num2str(pluscrit),' month=',num2str(i)])
 title(['GPCP Precip, La Nina ',num2str(pluscrit),' month=',num2str(i),' nn=',num2str(nn(2,i))])
 set(gca,'FontSize',12);
 colorbar
 set(gca,'Color','none');
-saveas(gca,['PrecipNina_',num2str(pluscrit),num2str(i),'.epsc']);
-export_fig ['PrecipNina_',num2str(pluscrit),num2str(i),'.epsc'] -transparent
 
 % Finally plot El Nino minus La Nina  ***************************************
 maxe=squeeze(max(max(max(pdifa))));
 maxe10=maxe/15.;
 conts=[-maxe:maxe10:maxe];
 
-		   pslat1=25.0; pslat2=50.0;
-coast = load('coast.mat');
-
+pslat1=25.0; pslat2=50.0;
 
  figure
   ax =axesm('MapProjection','robinson','Grid','on','FLineWidth',1.0,'MapLatLimit',[pslat1 pslat2],'MapLonLimit',[235 295]);
 [cmap]=buildcmap('rwb');
 colormap(cmap);
 [C, H] = contourfm(lat,lon,pdifa',conts,'LineWidth',0.5,'LineStyle','none');
-%[C, H] = contourm(lat,lon,pma(:,:,i)','LineWidth',0.5);
 caxis([-maxe maxe]);
 hold on
 plotm(coast.lat,coast.long,'Color',[0.5 0.5 0.5],'LineWidth',0.5);
-%geoshow(coast.lat,coast.long,'DisplayType','polygon','FaceColor','black');
 title(['GPCP Precip, Difference ',num2str(pluscrit),' month=',num2str(i)])
 title(['GPCP Precip, El Nino minus La Nina ',num2str(pluscrit),' month=', ...
 	    num2str(i),' nn=',num2str(nn(1,i)),' - ',num2str(nn(2,i))])
 set(gca,'FontSize',12);
 colorbar
 set(gca,'Color','none');
-saveas(gca,['PrecipDif_',num2str(pluscrit),num2str(i),'.epsc']);
-export_fig ['PrecipDif_',num2str(pluscrit),num2str(i),'.epsc'] -transparent
 
 end % end of ninpoa test
 end % end of ninnea test
 
 
-if devplot == 1
-%  Next plot standard deviations
-maxe=squeeze(max(max(max(pmd))));
-maxe10=maxe/15.;
-conts=[maxe10:maxe10:maxe];
-
- figure
-  ax =axesm('MapProjection','robinson','Grid','on','FLineWidth',1.0,'MapLatLimit',[pslat1 pslat2],'MapLonLimit',[235 295]);
-[cmap]=buildcmap('rwb');
-colormap(cmap);
-[C, H] = contourfm(lat,lon,pmd(:,:,i)',conts,'LineWidth',0.5,'LineStyle','none');
-%[C, H] = contourm(lat,lon,pmc(:,:,i)','LineWidth',0.5);
-caxis([0 maxe]);
-hold on
-plotm(coast.lat,coast.long,'Color',[0.5 0.5 0.5],'LineWidth',0.5);
-%geoshow(coast.lat,coast.long,'DisplayType','polygon','FaceColor','black');
-title(['GPCP Precip Deviation, month ',num2str(i)])
-set(gca,'FontSize',12);
-colorbar
-set(gca,'Color','none');
-saveas(gca,['PrecipSTD_',num2str(i),'.epsc']);
-export_fig ['PrecipSTD_',num2str(i),'.epsc'] -transparent
-
-end   % end of devplot if
 end   % end of onlytstat if
 end   % end of month loop
-nn
-
-
-
 
 end  %  of allskip if
 
